@@ -1,3 +1,4 @@
+// Hill Cipher
 #include <iostream>
 #define block_size 2
 using namespace std;
@@ -24,18 +25,27 @@ class HillCipher
 		key_inverse[1][1] = (adjoint * key[0][0])%26;
 	}
 	
-	int* mat_multiply(int matA[block_size][block_size], int matB[block_size])
+	void mat_multiply(int matA[block_size][block_size], int matB[block_size], int result[block_size])
 	{
-		int result[block_size];
 		for(int i=0 ; i<block_size ; i++)
 		{
-			result[i][j]=0;
+			result[i]=0;
 			for(int j=0; j<block_size ; j++)
 			{
-				result[i][j] += matA[i][j]*matB[j];
+				result[i] += matA[i][j]*matB[j];
 			}
+			result[i] = result[i]%26;
 		}
-		return result;
+	}
+	string stuff(string text)
+	{
+		string newText = text;
+		int stuff_length = text.length()%block_size;
+		for(int i=0 ; i<stuff_length ; i++)
+		{
+			newText.push_back('x');
+		}
+		return newText;
 	}
 	
 public:
@@ -52,6 +62,7 @@ public:
 	}
 	string encrypt(string plain_text)
 	{
+		plain_text = stuff(plain_text);
 		string cipher_text = plain_text;
 		for(int i=0 ; i<plain_text.length() ; i+=block_size)
 		{
@@ -60,17 +71,31 @@ public:
 			{
 				block[j] = plain_text[i+j]-'a';
 			}
-			new_block = mat_multiply(key, block);
+			mat_multiply(key, block, new_block);
 			for(int j=0 ; j<block_size ; j++)
 			{
-				cipher_text[i+j] = block[j]+'a';
+				cipher_text[i+j] = new_block[j]+'a';
 			}
 		}
 		return cipher_text;
 	}
 	string decrypt(string cipher_text)
 	{
+		cipher_text = stuff(cipher_text);
 		string plain_text = cipher_text;
+		for(int i=0 ; i<cipher_text.length() ; i+=block_size)
+		{
+			int block[block_size], new_block[block_size];
+			for(int j=0 ; j<block_size ; j++)
+			{
+				block[j] = cipher_text[i+j]-'a';
+			}
+			mat_multiply(key_inverse, block, new_block);
+			for(int j=0 ; j<block_size ; j++)
+			{
+				plain_text[i+j] = new_block[j]+'a';
+			}
+		}
 		return plain_text;
 	}
 
@@ -80,7 +105,7 @@ int main()
 {
 	int key[block_size][block_size];
 	string plain_text;
-	cout << "Enter key : " << endl;
+	cout << "Enter key : ";
 	for(int i=0 ; i<block_size ; i++)
 	{
 		for(int j=0 ; j<block_size; j++)
